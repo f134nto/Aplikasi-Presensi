@@ -1,0 +1,6 @@
+{
+  "name": "Presensi MTs Wangon",
+  "description": "Aplikasi Absensi & Laporan Harian Guru/Karyawan MTs Ma'arif NU 1 Wangon berbasis lokasi GPS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

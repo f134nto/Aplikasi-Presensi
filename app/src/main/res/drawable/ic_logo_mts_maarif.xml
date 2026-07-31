@@ -1,0 +1,85 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Outer Green Pentagon Crest Frame -->
+    <path
+        android:fillColor="#598234"
+        android:pathData="M 60,8 L 108,35 L 94,102 L 26,102 L 12,35 Z" />
+
+    <!-- Inner White Outline -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000"
+        android:pathData="M 60,13 L 103,38 L 90,97 L 30,97 L 17,38 Z" />
+
+    <!-- Center Yellow Circle (Globe Emblem Base) -->
+    <path
+        android:fillColor="#FEF08A"
+        android:pathData="M 60,26 A 25,25 0 1,1 59.9,26 Z" />
+
+    <!-- Circle Border -->
+    <path
+        android:strokeColor="#3B5822"
+        android:strokeWidth="1.5"
+        android:fillColor="#00000000"
+        android:pathData="M 60,26 A 25,25 0 1,1 59.9,26 Z" />
+
+    <!-- Globe Grid Lines in Center Circle -->
+    <path
+        android:strokeColor="#598234"
+        android:strokeWidth="1"
+        android:fillColor="#00000000"
+        android:pathData="M 36,51 C 45,45 75,45 84,51 M 36,51 C 45,57 75,57 84,51 M 60,26 L 60,76 M 40,36 C 50,42 70,42 80,36" />
+
+    <!-- Center Crescent Moon -->
+    <path
+        android:fillColor="#598234"
+        android:pathData="M 54,42 A 12,12 0 1,0 68,58 A 15,15 0 1,1 54,42 Z" />
+
+    <!-- Center Star -->
+    <path
+        android:fillColor="#598234"
+        android:pathData="M 60,38 L 61.5,42 L 65,42.5 L 62.5,45 L 63,49 L 60,47 L 57,49 L 57.5,45 L 55,42.5 L 58.5,42 Z" />
+
+    <!-- 4 Surround Stars -->
+    <path
+        android:fillColor="#D97706"
+        android:pathData="M 45,35 L 46,38 L 49,38 L 47,40 L 48,43 L 45,41 L 42,43 L 43,40 L 41,38 L 44,38 Z
+                          M 75,35 L 76,38 L 79,38 L 77,40 L 78,43 L 75,41 L 72,43 L 73,40 L 71,38 L 74,38 Z
+                          M 42,55 L 43,57 L 45,57 L 44,59 L 44.5,61 L 42,60 L 39.5,61 L 40,59 L 39,57 L 41,57 Z
+                          M 78,55 L 79,57 L 81,57 L 80,59 L 80.5,61 L 78,60 L 75.5,61 L 76,59 L 75,57 L 77,57 Z" />
+
+    <!-- Open Hands Holding Pen Nib at Bottom -->
+    <path
+        android:fillColor="#FBBF24"
+        android:strokeColor="#B45309"
+        android:strokeWidth="1"
+        android:pathData="M 28,70 Q 40,78 52,90 Q 44,94 36,90 Q 28,84 28,70 Z" />
+
+    <path
+        android:fillColor="#FBBF24"
+        android:strokeColor="#B45309"
+        android:strokeWidth="1"
+        android:pathData="M 92,70 Q 80,78 68,90 Q 76,94 84,90 Q 92,84 92,70 Z" />
+
+    <!-- Pen Nib in Center -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#B45309"
+        android:strokeWidth="1.5"
+        android:pathData="M 60,72 L 64,82 L 60,88 L 56,82 Z" />
+    <path
+        android:strokeColor="#B45309"
+        android:strokeWidth="1"
+        android:pathData="M 60,72 L 60,82" />
+
+    <!-- Banner Base Ribbon -->
+    <path
+        android:fillColor="#15803D"
+        android:pathData="M 22,96 L 98,96 L 90,106 L 30,106 Z" />
+
+</vector>
