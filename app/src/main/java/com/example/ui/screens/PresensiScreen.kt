@@ -204,69 +204,50 @@ fun PresensiScreen(viewModel: MainViewModel) {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Identitas Pegawai",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        if (isDeviceLocked) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xFFDC2626))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "🔒 TERKUNCI",
-                                    color = Color.White,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
+                    Text(
+                        text = "Identitas Pegawai",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
-                    TextButton(onClick = {
-                        if (isDeviceLocked) {
-                            viewModel.showBanner("🔒 Perangkat terkunci untuk ${selectedTeacher.name}. Buka kunci melalui menu Profil & Keamanan jika ingin mengganti nama pegawai.")
-                        } else {
-                            showTeacherPicker = true
-                        }
-                    }) {
+                    Button(
+                        onClick = { showTeacherPicker = true },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+                    ) {
                         Icon(
-                            imageVector = if (isDeviceLocked) Icons.Default.Lock else Icons.Default.PersonSearch,
+                            imageVector = Icons.Default.PersonSearch,
                             contentDescription = "Pilih",
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (isDeviceLocked) "Status Kunci" else "Ganti Pegawai")
+                        Text("Ganti Pegawai", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (isDeviceLocked) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(12.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .background(MaterialTheme.colorScheme.primary),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = selectedTeacher.name.take(1),
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = Color.White,
+                            fontSize = 18.sp
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
@@ -281,52 +262,6 @@ fun PresensiScreen(viewModel: MainViewModel) {
                             text = if (selectedTeacher.nip.isNotBlank()) "NIP: ${selectedTeacher.nip}" else "Role: ${selectedTeacher.role} (${selectedTeacher.department})",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (isDeviceLocked) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFFEF3C7))
-                            .padding(8.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "Lock Info",
-                                tint = Color(0xFFB45309),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "HP ini dikunci khusus untuk 1 nama (${selectedTeacher.name}). Tidak bisa ganti akun tanpa reset kunci.",
-                                fontSize = 11.sp,
-                                color = Color(0xFF92400E),
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                } else {
-                    OutlinedButton(
-                        onClick = { viewModel.lockDeviceToCurrentTeacher() },
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth().height(38.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Lock",
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Kunci Perangkat Ini Khusus untuk ${selectedTeacher.name.split(" ").firstOrNull() ?: ""}",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -481,24 +416,6 @@ fun PresensiScreen(viewModel: MainViewModel) {
                     fontWeight = FontWeight.SemiBold,
                     color = if (scheduleCheck.isValidWindow) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
-
-                if (!scheduleCheck.isValidWindow) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { overrideSchedule = !overrideSchedule }
-                    ) {
-                        androidx.compose.material3.Checkbox(
-                            checked = overrideSchedule,
-                            onCheckedChange = { overrideSchedule = it }
-                        )
-                        Text(
-                            text = "Bypass Jam untuk Uji Coba Presensi (Mode Demo Admin)",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
             }
         }
 
@@ -580,15 +497,6 @@ fun PresensiScreen(viewModel: MainViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors()
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                TextButton(
-                    onClick = { viewModel.toggleLocationSimulation() },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text(if (isSimulatingOutArea) "🔄 Ke Lokasi Asli Sekolah" else "🧪 Simulasi Lokasi di Luar Area (250m)")
-                }
             }
         }
 

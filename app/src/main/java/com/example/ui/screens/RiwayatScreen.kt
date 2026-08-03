@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDone
@@ -29,15 +30,20 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,6 +56,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.MainViewModel
@@ -63,6 +72,13 @@ fun RiwayatScreen(viewModel: MainViewModel) {
 
     var searchQuery by remember { mutableStateOf("") }
 
+    // Password Protection for Download
+    var showPasswordDialog by remember { mutableStateOf(false) }
+    var pendingDownloadType by remember { mutableStateOf<String?>(null) } // "PDF" or "EXCEL"
+    var inputPassword by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf(false) }
+    var isPasswordVisible by remember { mutableStateOf(false) }
+
     val filteredList = presensiList.filter {
         it.teacherName.contains(searchQuery, ignoreCase = true) ||
                 it.nip.contains(searchQuery, ignoreCase = true) ||
@@ -71,6 +87,112 @@ fun RiwayatScreen(viewModel: MainViewModel) {
     }
 
     val unsyncedCount = presensiList.count { !it.isSynced }
+
+    if (showPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showPasswordDialog = false
+                inputPassword = ""
+                passwordError = false
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = "Password Required",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "🔐 Password Diperlukan",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Masukkan password untuk mengunduh laporan absensi (${pendingDownloadType ?: "Laporan"}):",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = inputPassword,
+                        onValueChange = {
+                            inputPassword = it
+                            passwordError = false
+                        },
+                        label = { Text("Password Unduh") },
+                        placeholder = { Text("Masukkan password...") },
+                        singleLine = true,
+                        isError = passwordError,
+                        supportingText = if (passwordError) {
+                            { Text("Password salah! Silakan coba lagi.", color = MaterialTheme.colorScheme.error) }
+                        } else null,
+                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = if (isPasswordVisible) "Sembunyikan password" else "Tampilkan password"
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (inputPassword == "F134anto") {
+                            showPasswordDialog = false
+                            passwordError = false
+                            val downloadType = pendingDownloadType
+                            pendingDownloadType = null
+
+                            if (downloadType == "PDF") {
+                                val pdfFile = ExportUtils.generatePdfReport(context, presensiList)
+                                if (pdfFile != null) {
+                                    shareFile(context, pdfFile, "application/pdf")
+                                    viewModel.showBanner("Laporan PDF berhasil dibuat & siap diunduh")
+                                } else {
+                                    viewModel.showBanner("Gagal membuat dokumen PDF")
+                                }
+                            } else if (downloadType == "EXCEL") {
+                                val csvFile = ExportUtils.generateCsvReport(context, presensiList)
+                                if (csvFile != null) {
+                                    shareFile(context, csvFile, "text/csv")
+                                    viewModel.showBanner("Laporan CSV Excel berhasil dibuat & siap diunduh")
+                                } else {
+                                    viewModel.showBanner("Gagal membuat berkas CSV Excel")
+                                }
+                            }
+                        } else {
+                            passwordError = true
+                        }
+                    },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Verifikasi & Unduh", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showPasswordDialog = false
+                        inputPassword = ""
+                        passwordError = false
+                    }
+                ) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -129,47 +251,52 @@ fun RiwayatScreen(viewModel: MainViewModel) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = "📥 UNDUH LAPORAN ABSENSI",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
 
                 // Export Buttons
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    OutlinedButton(
+                    Button(
                         onClick = {
-                            val pdfFile = ExportUtils.generatePdfReport(context, presensiList)
-                            if (pdfFile != null) {
-                                shareFile(context, pdfFile, "application/pdf")
-                                viewModel.showBanner("Laporan PDF berhasil dibuat & diunduh")
-                            } else {
-                                viewModel.showBanner("Gagal membuat dokumen PDF")
-                            }
+                            pendingDownloadType = "PDF"
+                            inputPassword = ""
+                            passwordError = false
+                            showPasswordDialog = true
                         },
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.weight(1f)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.weight(1f).height(44.dp)
                     ) {
                         Icon(Icons.Default.FileDownload, contentDescription = "PDF", modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Ekspor PDF", fontSize = 12.sp)
+                        Text("Unduh PDF", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
 
-                    OutlinedButton(
+                    Button(
                         onClick = {
-                            val csvFile = ExportUtils.generateCsvReport(context, presensiList)
-                            if (csvFile != null) {
-                                shareFile(context, csvFile, "text/csv")
-                                viewModel.showBanner("Laporan CSV Excel berhasil dibuat & diunduh")
-                            } else {
-                                viewModel.showBanner("Gagal membuat berkas CSV Excel")
-                            }
+                            pendingDownloadType = "EXCEL"
+                            inputPassword = ""
+                            passwordError = false
+                            showPasswordDialog = true
                         },
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.weight(1f)
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+                        modifier = Modifier.weight(1f).height(44.dp)
                     ) {
                         Icon(Icons.Default.Download, contentDescription = "Excel", modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Ekspor Excel", fontSize = 12.sp)
+                        Text("Unduh Excel", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

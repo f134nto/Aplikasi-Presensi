@@ -114,28 +114,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             initialValue = emptyList()
         )
 
-        // Load Device Lock preference
+        // Clear any previous locked preference so the device is completely unlocked and accessible for all teachers/employees
         val prefs = application.getSharedPreferences("device_lock_prefs", Context.MODE_PRIVATE)
-        val isLocked = prefs.getBoolean("is_locked", false)
-        val lockedNip = prefs.getString("locked_nip", null)
-        if (isLocked && !lockedNip.isNullOrEmpty()) {
-            val teacher = TeacherData.teacherList.find { it.nip == lockedNip }
-            if (teacher != null) {
-                _selectedTeacher.value = teacher
-                _isDeviceLocked.value = true
-                _lockedTeacherNip.value = lockedNip
-            }
-        }
+        prefs.edit().clear().apply()
+        _isDeviceLocked.value = false
+        _lockedTeacherNip.value = null
 
         updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
         seedInitialSampleData()
     }
 
     fun setSelectedTeacher(teacher: Teacher) {
-        if (_isDeviceLocked.value && teacher.nip != _lockedTeacherNip.value) {
-            showBanner("Perangkat terkunci khusus untuk akun ${_selectedTeacher.value.name}. Buka kunci di Pengaturan jika ingin mengganti akun.")
-            return
-        }
         _selectedTeacher.value = teacher
     }
 
@@ -293,11 +282,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.insertPresensi(newRecord)
 
-            // Auto-lock device to teacher if not locked yet
-            if (!_isDeviceLocked.value) {
-                lockDeviceToCurrentTeacher()
-            }
-
             NotificationUtils.showPresensiSuccessNotification(
                 getApplication(),
                 teacher.name,
@@ -307,7 +291,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _dailyReportText.value = ""
             _keteranganText.value = ""
             _selfieBase64.value = null
-            showBanner("Permohonan / Presensi $currentType [$finalStatus] berhasil disimpan! Perangkat dikunci untuk ${teacher.name}.")
+            showBanner("Permohonan / Presensi $currentType [$finalStatus] untuk ${teacher.name} berhasil disimpan!")
             onSuccess()
         }
     }
