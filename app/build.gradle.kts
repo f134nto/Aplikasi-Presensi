@@ -59,6 +59,8 @@ android {
       val customDebug = signingConfigs.findByName("debugConfig")
       if (customDebug != null) {
         signingConfig = customDebug
+      } else {
+        signingConfig = signingConfigs.getByName("debug")
       }
     }
   }
@@ -80,7 +82,7 @@ secrets {
   defaultPropertiesFileName = ".env.example"
 }
 
-googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
+googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.IGNORE }
 
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
