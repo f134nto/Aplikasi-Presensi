@@ -217,11 +217,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 return
             }
 
-            if (_dailyReportText.value.isBlank()) {
-                onError("Mohon isi Laporan Harian / Ringkasan kegiatan sebelum mengirim presensi.")
-                return
-            }
-
             val scheduleResult = com.example.util.AttendanceScheduleUtils.checkSchedule(currentType)
             if (!scheduleResult.isValidWindow && !overrideScheduleCheck) {
                 onError("Gagal: ${scheduleResult.message}")
@@ -233,7 +228,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 "DILUAR JADWAL"
             }
-            finalReport = _dailyReportText.value
+            finalReport = _dailyReportText.value.ifBlank { "Presensi Selfie $currentType" }
         } else if (currentType == "IZIN") {
             if (_keteranganText.value.isBlank()) {
                 onError("Wajib mengisi kolom Keterangan Izin!")

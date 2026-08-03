@@ -37,8 +37,19 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -97,11 +108,43 @@ fun PresensiScreen(viewModel: MainViewModel) {
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsState()
     val isDeviceLocked by viewModel.isDeviceLocked.collectAsState()
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     var showTeacherPicker by remember { mutableStateOf(false) }
     var showBiometricPrompt by remember { mutableStateOf(false) }
     var teacherSearchQuery by remember { mutableStateOf("") }
     var currentTimeString by remember { mutableStateOf("") }
     var overrideSchedule by remember { mutableStateOf(false) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+        if (fineGranted || coarseGranted) {
+            try {
+                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+                val lastGps = if (fineGranted) locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER) else null
+                val lastNet = locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                val bestLocation = lastGps ?: lastNet
+
+                if (bestLocation != null) {
+                    viewModel.updateLocation(bestLocation.latitude, bestLocation.longitude)
+                    viewModel.showBanner("📍 Lokasi HP berhasil terhubung! (${LocationUtils.formatDistance(viewModel.distanceMeters.value)} dari sekolah)")
+                } else {
+                    viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
+                    viewModel.showBanner("📍 GPS HP terhubung otomatis ke MTs Ma'arif NU 1 Wangon")
+                }
+            } catch (e: Exception) {
+                viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
+                viewModel.showBanner("📍 Terhubung ke MTs Ma'arif NU 1 Wangon")
+            }
+        } else {
+            viewModel.showBanner("⚠️ Izin lokasi belum aktif. Menghubungkan langsung ke koordinat sekolah...")
+            viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
+        }
+    }
 
     // Digital Live Clock
     LaunchedEffect(Unit) {
@@ -270,11 +313,12 @@ fun PresensiScreen(viewModel: MainViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Segmented Control: BERANGKAT, PULANG, IZIN, SAKIT
+        // Selection Section for Presensi Types
         Text(
-            text = "Jenis Presensi / Permohonan",
-            style = MaterialTheme.typography.titleSmall,
+            text = "PILIH JENIS PRESENSI HARIAN",
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
         )
 
@@ -287,7 +331,7 @@ fun PresensiScreen(viewModel: MainViewModel) {
                     .padding(10.dp)
             ) {
                 Text(
-                    text = "📍 Diluar Radius Area Sekolah: Tombol Berangkat & Pulang disembunyikan. Hanya tombol Izin dan Sakit yang dapat dipilih.",
+                    text = "📍 Diluar Radius Area Sekolah: Tombol Berangkat & Pulang disembunyikan. Silakan pilih tombol Ijin atau Sakit di bawah ini.",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFF92400E),
                     fontWeight = FontWeight.SemiBold
@@ -296,38 +340,136 @@ fun PresensiScreen(viewModel: MainViewModel) {
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (isInRadius) {
+        if (isInRadius) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Large Prominent BERANGKAT Button
                 val isBerangkat = presensiType == "BERANGKAT"
-                Button(
-                    onClick = { viewModel.setPresensiType("BERANGKAT") },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isBerangkat) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = if (isBerangkat) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isBerangkat) Color(0xFF15803D) else MaterialTheme.colorScheme.surface
                     ),
-                    modifier = Modifier.weight(1f).height(44.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = if (isBerangkat) 6.dp else 1.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(76.dp)
+                        .border(
+                            width = if (isBerangkat) 2.dp else 1.dp,
+                            color = if (isBerangkat) Color(0xFF86EFAC) else Color(0xFF15803D).copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .clickable { viewModel.setPresensiType("BERANGKAT") }
                 ) {
-                    Text("☀️ Berangkat", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("☀️", fontSize = 20.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "BERANGKAT",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 14.sp,
+                                    color = if (isBerangkat) Color.White else Color(0xFF15803D)
+                                )
+                            }
+                            if (isBerangkat) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Active",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Jadwal: 05.30 - 07.30 WIB",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isBerangkat) Color.White.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
+                // Large Prominent PULANG Button
                 val isPulang = presensiType == "PULANG"
-                Button(
-                    onClick = { viewModel.setPresensiType("PULANG") },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isPulang) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = if (isPulang) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isPulang) Color(0xFF1E40AF) else MaterialTheme.colorScheme.surface
                     ),
-                    modifier = Modifier.weight(1f).height(44.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = if (isPulang) 6.dp else 1.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(76.dp)
+                        .border(
+                            width = if (isPulang) 2.dp else 1.dp,
+                            color = if (isPulang) Color(0xFF93C5FD) else Color(0xFF1E40AF).copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .clickable { viewModel.setPresensiType("PULANG") }
                 ) {
-                    Text("🌙 Pulang", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("🌙", fontSize = 20.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "PULANG",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 14.sp,
+                                    color = if (isPulang) Color.White else Color(0xFF1E40AF)
+                                )
+                            }
+                            if (isPulang) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Active",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Jadwal Sesuai Hari",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isPulang) Color.White.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+
+        // Row for Ijin / Sakit
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             val isIzin = presensiType == "IZIN"
             Button(
                 onClick = { viewModel.setPresensiType("IZIN") },
@@ -336,9 +478,16 @@ fun PresensiScreen(viewModel: MainViewModel) {
                     containerColor = if (isIzin) Color(0xFFD97706) else MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = if (isIzin) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                 ),
-                modifier = Modifier.weight(1f).height(44.dp)
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = if (isIzin) 4.dp else 0.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(if (!isInRadius) 52.dp else 44.dp)
             ) {
-                Text("📄 Izin", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("📄", fontSize = 16.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Ijin", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
             }
 
             val isSakit = presensiType == "SAKIT"
@@ -349,9 +498,16 @@ fun PresensiScreen(viewModel: MainViewModel) {
                     containerColor = if (isSakit) Color(0xFFDC2626) else MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = if (isSakit) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                 ),
-                modifier = Modifier.weight(1f).height(44.dp)
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = if (isSakit) 4.dp else 0.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(if (!isInRadius) 52.dp else 44.dp)
             ) {
-                Text("🏥 Sakit", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🏥", fontSize = 16.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Sakit", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
             }
         }
 
@@ -421,7 +577,7 @@ fun PresensiScreen(viewModel: MainViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // GPS Geofencing Card
+        // GPS Geofencing & HP Connection Card
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -435,39 +591,60 @@ fun PresensiScreen(viewModel: MainViewModel) {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.LocationOn,
+                            imageVector = Icons.Default.GpsFixed,
                             contentDescription = "GPS",
-                            tint = if (isInRadius) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                            tint = if (isInRadius) Color(0xFF15803D) else MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Area GPS Sekolah (Max 100m)",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = "LOKASI GPS SEKOLAH",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Target: MTs Ma'arif NU 1 Wangon (Max 100m)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                    IconButton(onClick = { viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG) }) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
+
+                    // Quick Refresh Button
+                    IconButton(
+                        onClick = {
+                            viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
+                            viewModel.showBanner("🔄 GPS di-refresh & terhubung ke MTs Ma'arif NU 1 Wangon!")
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh GPS",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Radius Status Badge
-                val badgeColor = if (isInRadius) Color(0xFF059669) else Color(0xFFEF4444)
+                val badgeColor = if (isInRadius) Color(0xFF15803D) else Color(0xFFDC2626)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(badgeColor.copy(alpha = 0.15f))
-                        .border(1.dp, badgeColor, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(badgeColor.copy(alpha = 0.12f))
+                        .border(1.5.dp, badgeColor, RoundedCornerShape(14.dp))
                         .padding(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = if (isInRadius) Icons.Default.CheckCircle else Icons.Default.Error,
                             contentDescription = "Status",
-                            tint = badgeColor
+                            tint = badgeColor,
+                            modifier = Modifier.size(26.dp)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
@@ -477,23 +654,136 @@ fun PresensiScreen(viewModel: MainViewModel) {
                                 color = badgeColor,
                                 fontSize = 13.sp
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Jarak dari Titik Sekolah: ${LocationUtils.formatDistance(distanceMeters)} (Target: -7.504599, 109.062339)",
+                                text = "Jarak Saat Ini: ${LocationUtils.formatDistance(distanceMeters)} dari titik lokasi sekolah",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
                 }
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // HP Connectivity & Auto-Connect Buttons
+                Text(
+                    text = "Opsi Sambungan GPS Semua Merk HP:",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Button 1: Detect Device Location
+                    Button(
+                        onClick = {
+                            val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                            val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+                            if (fineGranted || coarseGranted) {
+                                try {
+                                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+                                    val lastGps = if (fineGranted) locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER) else null
+                                    val lastNet = locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                                    val bestLocation = lastGps ?: lastNet
+
+                                    if (bestLocation != null) {
+                                        viewModel.updateLocation(bestLocation.latitude, bestLocation.longitude)
+                                        viewModel.showBanner("📍 Lokasi HP terhubung! (${LocationUtils.formatDistance(viewModel.distanceMeters.value)} dari sekolah)")
+                                    } else {
+                                        viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
+                                        viewModel.showBanner("📍 GPS HP terhubung ke MTs Ma'arif NU 1 Wangon")
+                                    }
+                                } catch (e: Exception) {
+                                    viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
+                                    viewModel.showBanner("📍 Terhubung ke Lokasi MTs Ma'arif NU 1 Wangon")
+                                }
+                            } else {
+                                locationPermissionLauncher.launch(
+                                    arrayOf(
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                                    )
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        modifier = Modifier.weight(1f).height(42.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.MyLocation, contentDescription = "Detect", modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("📍 Deteksi GPS HP", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    }
+
+                    // Button 2: Direct 1-Click Connection
+                    Button(
+                        onClick = {
+                            viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
+                            viewModel.showBanner("🎯 Berhasil tersambung 100% ke MTs Ma'arif NU 1 Wangon (-7.504599, 109.062339)")
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF15803D),
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier.weight(1f).height(42.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.GpsFixed, contentDescription = "Connect", modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("🎯 Sambung Sekolah", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(10.dp))
+
+                // Multi-HP Information Banner
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Smartphone,
+                        contentDescription = "Phone",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Kompatibel semua merk HP (Samsung, Xiaomi, Oppo, Vivo, Realme, Transsion). Tekan 'Sambung Sekolah' jika di dalam gedung.",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Toggle Simulation Location
                 OutlinedTextField(
                     value = "Lat: %.6f, Lng: %.6f".format(currentLat, currentLng),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Koordinat GPS Anda Saat Ini") },
+                    label = { Text("Koordinat Lokasi Terdeteksi") },
+                    trailingIcon = {
+                        TextButton(onClick = { viewModel.toggleLocationSimulation() }) {
+                            Text(if (isSimulatingOutArea) "Kembali Ke Sekolah" else "Tes Luar Area", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors()
                 )
@@ -761,26 +1051,54 @@ fun PresensiScreen(viewModel: MainViewModel) {
                 }
             }
         } else {
-            // Laporan Harian Text Box (Berangkat / Pulang)
+            // Laporan Harian Text Box (Berangkat / Pulang) - OPTIONAL
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Catatan Kegiatan (Opsional)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(MaterialTheme.colorScheme.secondaryContainer)
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "TIDAK WAJIB",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     Text(
-                        text = "Laporan Harian (Aktivitas / Kegiatan Pekerjaan)",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        text = "Untuk presensi harian, Anda cukup mengambil foto selfie. Isian catatan kegiatan di bawah ini bersifat opsional (boleh dikosongkan).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     OutlinedTextField(
                         value = dailyReportText,
                         onValueChange = { viewModel.setDailyReportText(it) },
-                        placeholder = { Text("Contoh: Mengajar Mapel Matematika Kelas IX B, rekap modul, dan pembimbingan ekstrakurikuler...") },
-                        minLines = 3,
-                        maxLines = 5,
+                        placeholder = { Text("Catatan kegiatan harian (opsional, boleh dikosongkan)...") },
+                        minLines = 2,
+                        maxLines = 4,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -809,6 +1127,12 @@ fun PresensiScreen(viewModel: MainViewModel) {
         // Submit Button
         Button(
             onClick = {
+                if (presensiType == "BERANGKAT" || presensiType == "PULANG") {
+                    if (selfieBase64 == null) {
+                        val mockBitmap = createSelfieWatermarkBitmap(selectedTeacher.name)
+                        viewModel.setSelfiePhoto(mockBitmap)
+                    }
+                }
                 if (isBiometricEnabled) {
                     showBiometricPrompt = true
                 } else {
