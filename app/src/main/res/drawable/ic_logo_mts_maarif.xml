@@ -4,82 +4,107 @@
     android:viewportWidth="120"
     android:viewportHeight="120">
 
-    <!-- Outer Green Pentagon Crest Frame -->
+    <!-- Outer Green 5-Lobed Shield Base (Bunga Teratai 5 Sudut) -->
     <path
-        android:fillColor="#598234"
-        android:pathData="M 60,8 L 108,35 L 94,102 L 26,102 L 12,35 Z" />
+        android:fillColor="#2E7D32"
+        android:pathData="M 60,6 Q 78,14 88,18 Q 112,32 108,58 Q 102,86 86,104 Q 72,114 60,116 Q 48,114 34,104 Q 18,86 12,58 Q 8,32 32,18 Q 42,14 60,6 Z" />
 
-    <!-- Inner White Outline -->
+    <!-- Outer White Border -->
     <path
         android:strokeColor="#FFFFFF"
         android:strokeWidth="2.5"
         android:fillColor="#00000000"
-        android:pathData="M 60,13 L 103,38 L 90,97 L 30,97 L 17,38 Z" />
+        android:pathData="M 60,11 Q 76,18 85,22 Q 106,35 103,59 Q 97,84 82,100 Q 70,109 60,111 Q 50,109 38,100 Q 23,84 17,59 Q 14,35 35,22 Q 44,18 60,11 Z" />
 
-    <!-- Center Yellow Circle (Globe Emblem Base) -->
+    <!-- Inner Green Line Accent -->
     <path
-        android:fillColor="#FEF08A"
-        android:pathData="M 60,26 A 25,25 0 1,1 59.9,26 Z" />
-
-    <!-- Circle Border -->
-    <path
-        android:strokeColor="#3B5822"
-        android:strokeWidth="1.5"
+        android:strokeColor="#1B5E20"
+        android:strokeWidth="1.2"
         android:fillColor="#00000000"
-        android:pathData="M 60,26 A 25,25 0 1,1 59.9,26 Z" />
+        android:pathData="M 60,14 Q 74,21 82,25 Q 102,37 99,60 Q 94,82 80,97 Q 68,105 60,107 Q 52,105 40,97 Q 26,82 21,60 Q 18,37 38,25 Q 46,21 60,14 Z" />
 
-    <!-- Globe Grid Lines in Center Circle -->
+    <!-- Yellow Center Circle -->
     <path
-        android:strokeColor="#598234"
-        android:strokeWidth="1"
-        android:fillColor="#00000000"
-        android:pathData="M 36,51 C 45,45 75,45 84,51 M 36,51 C 45,57 75,57 84,51 M 60,26 L 60,76 M 40,36 C 50,42 70,42 80,36" />
-
-    <!-- Center Crescent Moon -->
-    <path
-        android:fillColor="#598234"
-        android:pathData="M 54,42 A 12,12 0 1,0 68,58 A 15,15 0 1,1 54,42 Z" />
-
-    <!-- Center Star -->
-    <path
-        android:fillColor="#598234"
-        android:pathData="M 60,38 L 61.5,42 L 65,42.5 L 62.5,45 L 63,49 L 60,47 L 57,49 L 57.5,45 L 55,42.5 L 58.5,42 Z" />
-
-    <!-- 4 Surround Stars -->
-    <path
-        android:fillColor="#D97706"
-        android:pathData="M 45,35 L 46,38 L 49,38 L 47,40 L 48,43 L 45,41 L 42,43 L 43,40 L 41,38 L 44,38 Z
-                          M 75,35 L 76,38 L 79,38 L 77,40 L 78,43 L 75,41 L 72,43 L 73,40 L 71,38 L 74,38 Z
-                          M 42,55 L 43,57 L 45,57 L 44,59 L 44.5,61 L 42,60 L 39.5,61 L 40,59 L 39,57 L 41,57 Z
-                          M 78,55 L 79,57 L 81,57 L 80,59 L 80.5,61 L 78,60 L 75.5,61 L 76,59 L 75,57 L 77,57 Z" />
-
-    <!-- Open Hands Holding Pen Nib at Bottom -->
-    <path
-        android:fillColor="#FBBF24"
-        android:strokeColor="#B45309"
-        android:strokeWidth="1"
-        android:pathData="M 28,70 Q 40,78 52,90 Q 44,94 36,90 Q 28,84 28,70 Z" />
-
-    <path
-        android:fillColor="#FBBF24"
-        android:strokeColor="#B45309"
-        android:strokeWidth="1"
-        android:pathData="M 92,70 Q 80,78 68,90 Q 76,94 84,90 Q 92,84 92,70 Z" />
-
-    <!-- Pen Nib in Center -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:strokeColor="#B45309"
+        android:fillColor="#FFEB3B"
+        android:strokeColor="#1B5E20"
         android:strokeWidth="1.5"
-        android:pathData="M 60,72 L 64,82 L 60,88 L 56,82 Z" />
-    <path
-        android:strokeColor="#B45309"
-        android:strokeWidth="1"
-        android:pathData="M 60,72 L 60,82" />
+        android:pathData="M 60,24 A 26,26 0 1,1 59.9,24 Z" />
 
-    <!-- Banner Base Ribbon -->
+    <!-- Center Globe Mesh (Peta Dunia NU) -->
     <path
-        android:fillColor="#15803D"
-        android:pathData="M 22,96 L 98,96 L 90,106 L 30,106 Z" />
+        android:strokeColor="#2E7D32"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000"
+        android:pathData="M 34,50 C 43,44 77,44 86,50 M 34,50 C 43,56 77,56 86,50 M 60,24 L 60,76 M 42,34 C 50,39 70,39 78,34 M 42,66 C 50,61 70,61 78,66 M 46,27 C 52,38 52,62 46,73 M 74,27 C 68,38 68,62 74,73" />
+
+    <!-- Tying Rope Around Globe (Tali Jagad NU) -->
+    <path
+        android:strokeColor="#1B5E20"
+        android:strokeWidth="1.8"
+        android:fillColor="#00000000"
+        android:pathData="M 34,50 A 26,26 0 0,0 86,50 A 26,26 0 0,0 34,50 Z" />
+
+    <!-- Center Big Star (Bintang Utama) -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M 60,30 L 61.5,34 L 65.5,34.5 L 62.5,37 L 63.2,41 L 60,39 L 56.8,41 L 57.5,37 L 54.5,34.5 L 58.5,34 Z" />
+
+    <!-- 4 Stars Upper Arc -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M 46,33 L 47,35.5 L 49.5,35.5 L 47.5,37 L 48.2,39.5 L 46,38 L 43.8,39.5 L 44.5,37 L 42.5,35.5 L 45,35.5 Z
+                          M 53,31 L 54,33.5 L 56.5,33.5 L 54.5,35 L 55.2,37.5 L 53,36 L 50.8,37.5 L 51.5,35 L 49.5,33.5 L 52,33.5 Z
+                          M 67,31 L 68,33.5 L 70.5,33.5 L 68.5,35 L 69.2,37.5 L 67,36 L 64.8,37.5 L 65.5,35 L 63.5,33.5 L 66,33.5 Z
+                          M 74,33 L 75,35.5 L 77.5,35.5 L 75.5,37 L 76.2,39.5 L 74,38 L 71.8,39.5 L 72.5,37 L 70.5,35.5 L 73,35.5 Z" />
+
+    <!-- 4 Stars Lower Arc -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M 45,58 L 46,60 L 48,60 L 46.5,61 L 47,63 L 45,62 L 43,63 L 43.5,61 L 42,60 L 44,60 Z
+                          M 52,60 L 53,62 L 55,62 L 53.5,63 L 54,65 L 52,64 L 50,65 L 50.5,63 L 49,62 L 51,62 Z
+                          M 68,60 L 69,62 L 71,62 L 69.5,63 L 70,65 L 68,64 L 66,65 L 66.5,63 L 65,62 L 67,62 Z
+                          M 75,58 L 76,60 L 78,60 L 76.5,61 L 77,63 L 75,62 L 73,63 L 73.5,61 L 72,60 L 74,60 Z" />
+
+    <!-- Arabic Calligraphy "Nahdlatul Ulama" in Center Circle -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M 42,48 C 44,45 48,44 51,46 C 53,47 52,50 49,50 C 47,50 45,48 43,49 C 45,52 50,52 54,50 C 57,48 58,45 61,45 C 64,45 66,48 69,50 C 72,52 76,51 78,48 L 76,47 C 74,49 71,50 69,48 C 67,46 64,43 61,43 C 57,43 55,46 52,48 C 49,49 46,48 44,46 Z" />
+
+    <!-- N U Text Below Calligraphy -->
+    <!-- Letter N -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M 41,63 L 43,63 L 43,68 L 46,63 L 48,63 L 48,70 L 46,70 L 46,65 L 43,70 L 41,70 Z" />
+    <!-- Letter U -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M 72,63 L 74,63 L 74,68 C 74,69.5 75,70 76,70 C 77,70 78,69.5 78,68 L 78,63 L 80,63 L 80,68 C 80,71.5 78,72 76,72 C 74,72 72,71.5 72,68 Z" />
+
+    <!-- Open Hands (Dua Telapak Tangan Kuning) at Bottom -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:strokeColor="#1B5E20"
+        android:strokeWidth="1.2"
+        android:pathData="M 32,73 Q 42,82 56,96 Q 48,102 38,98 Q 28,91 28,78 Z" />
+
+    <path
+        android:fillColor="#FFEB3B"
+        android:strokeColor="#1B5E20"
+        android:strokeWidth="1.2"
+        android:pathData="M 88,73 Q 78,82 64,96 Q 72,102 82,98 Q 92,91 92,78 Z" />
+
+    <!-- Pen Nib in Center (Pena Pendidikan) -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:strokeColor="#1B5E20"
+        android:strokeWidth="1.5"
+        android:pathData="M 60,76 L 65,88 L 60,96 L 55,88 Z" />
+    <path
+        android:strokeColor="#1B5E20"
+        android:strokeWidth="1.2"
+        android:pathData="M 60,76 L 60,88" />
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M 60,84 A 1.2,1.2 0 1,1 59.9,84 Z" />
 
 </vector>
