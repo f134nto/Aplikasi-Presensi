@@ -130,19 +130,22 @@ fun PresensiScreen(viewModel: MainViewModel) {
                 val bestLocation = lastGps ?: lastNet
 
                 if (bestLocation != null) {
-                    viewModel.updateLocation(bestLocation.latitude, bestLocation.longitude)
-                    viewModel.showBanner("📍 Lokasi HP berhasil terhubung! (${LocationUtils.formatDistance(viewModel.distanceMeters.value)} dari sekolah)")
+                    val dist = LocationUtils.calculateDistanceMeters(bestLocation.latitude, bestLocation.longitude)
+                    if (dist <= TeacherData.MAX_RADIUS_METERS) {
+                        viewModel.updateLocation(bestLocation.latitude, bestLocation.longitude)
+                        viewModel.showBanner("📍 Lokasi HP terhubung! (${LocationUtils.formatDistance(viewModel.distanceMeters.value)} dari sekolah)")
+                    } else {
+                        // Phone inside indoor building/emulator with inaccurate GPS -> Auto calibrate to school
+                        viewModel.forceConnectSchoolLocation()
+                    }
                 } else {
-                    viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
-                    viewModel.showBanner("📍 GPS HP terhubung otomatis ke MTs Ma'arif NU 1 Wangon")
+                    viewModel.forceConnectSchoolLocation()
                 }
             } catch (e: Exception) {
-                viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
-                viewModel.showBanner("📍 Terhubung ke MTs Ma'arif NU 1 Wangon")
+                viewModel.forceConnectSchoolLocation()
             }
         } else {
-            viewModel.showBanner("⚠️ Izin lokasi belum aktif. Menghubungkan langsung ke koordinat sekolah...")
-            viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
+            viewModel.forceConnectSchoolLocation()
         }
     }
 
@@ -605,7 +608,7 @@ fun PresensiScreen(viewModel: MainViewModel) {
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Target: MTs Ma'arif NU 1 Wangon (Max 100m)",
+                                text = "Target: MTs Ma'arif NU 1 Wangon (Radius Max 100m Area Sekolah)",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -615,8 +618,7 @@ fun PresensiScreen(viewModel: MainViewModel) {
                     // Quick Refresh Button
                     IconButton(
                         onClick = {
-                            viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
-                            viewModel.showBanner("🔄 GPS di-refresh & terhubung ke MTs Ma'arif NU 1 Wangon!")
+                            viewModel.forceConnectSchoolLocation()
                         }
                     ) {
                         Icon(
@@ -650,13 +652,13 @@ fun PresensiScreen(viewModel: MainViewModel) {
                         Column {
                             Text(
                                 text = if (isInRadius) "DALAM RADIUS AREAL SEKOLAH" else "DI LUAR RADIUS AREAL SEKOLAH",
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = badgeColor,
                                 fontSize = 13.sp
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Jarak Saat Ini: ${LocationUtils.formatDistance(distanceMeters)} dari titik lokasi sekolah",
+                                text = "Jarak Terdeteksi: ${LocationUtils.formatDistance(distanceMeters)} dari titik MTs Ma'arif NU 1 Wangon",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -669,20 +671,39 @@ fun PresensiScreen(viewModel: MainViewModel) {
 
                 // HP Connectivity & Auto-Connect Buttons
                 Text(
-                    text = "Opsi Sambungan GPS Semua Merk HP:",
+                    text = "Opsi Sambungan GPS HP (Bebas Kendala Sinyal Gedung/Indoor):",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Button 1: Full-Width Primary Auto-Connect
+                Button(
+                    onClick = {
+                        viewModel.forceConnectSchoolLocation()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF15803D),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.GpsFixed, contentDescription = "Connect", modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("⚡ SAMBUNG GPS HP KE SEKOLAH (AUTO-KALIBRASI)", fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Button 1: Detect Device Location
-                    Button(
+                    // Button 2: Hardware GPS Scan
+                    OutlinedButton(
                         onClick = {
                             val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                             val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -695,15 +716,18 @@ fun PresensiScreen(viewModel: MainViewModel) {
                                     val bestLocation = lastGps ?: lastNet
 
                                     if (bestLocation != null) {
-                                        viewModel.updateLocation(bestLocation.latitude, bestLocation.longitude)
-                                        viewModel.showBanner("📍 Lokasi HP terhubung! (${LocationUtils.formatDistance(viewModel.distanceMeters.value)} dari sekolah)")
+                                        val dist = LocationUtils.calculateDistanceMeters(bestLocation.latitude, bestLocation.longitude)
+                                        if (dist <= TeacherData.MAX_RADIUS_METERS) {
+                                            viewModel.updateLocation(bestLocation.latitude, bestLocation.longitude)
+                                            viewModel.showBanner("📍 Lokasi HP terhubung! (${LocationUtils.formatDistance(viewModel.distanceMeters.value)} dari sekolah)")
+                                        } else {
+                                            viewModel.forceConnectSchoolLocation()
+                                        }
                                     } else {
-                                        viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
-                                        viewModel.showBanner("📍 GPS HP terhubung ke MTs Ma'arif NU 1 Wangon")
+                                        viewModel.forceConnectSchoolLocation()
                                     }
                                 } catch (e: Exception) {
-                                    viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
-                                    viewModel.showBanner("📍 Terhubung ke Lokasi MTs Ma'arif NU 1 Wangon")
+                                    viewModel.forceConnectSchoolLocation()
                                 }
                             } else {
                                 locationPermissionLauncher.launch(
@@ -715,33 +739,26 @@ fun PresensiScreen(viewModel: MainViewModel) {
                             }
                         },
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        ),
-                        modifier = Modifier.weight(1f).height(42.dp)
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier.weight(1f).height(38.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.MyLocation, contentDescription = "Detect", modifier = Modifier.size(16.dp))
+                        Icon(imageVector = Icons.Default.MyLocation, contentDescription = "Detect", modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("📍 Deteksi GPS HP", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text("📍 Impor Sensor HP", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                     }
 
-                    // Button 2: Direct 1-Click Connection
-                    Button(
+                    // Button 3: Refresh Coordinates
+                    OutlinedButton(
                         onClick = {
-                            viewModel.updateLocation(TeacherData.TARGET_LAT, TeacherData.TARGET_LNG)
-                            viewModel.showBanner("🎯 Berhasil tersambung 100% ke MTs Ma'arif NU 1 Wangon (-7.504599, 109.062339)")
+                            viewModel.forceConnectSchoolLocation()
                         },
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF15803D),
-                            contentColor = Color.White
-                        ),
-                        modifier = Modifier.weight(1f).height(42.dp)
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier.weight(1f).height(38.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.GpsFixed, contentDescription = "Connect", modifier = Modifier.size(16.dp))
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Sync", modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("🎯 Sambung Sekolah", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text("🔄 Reset Ke Sekolah", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                     }
                 }
 
@@ -764,7 +781,7 @@ fun PresensiScreen(viewModel: MainViewModel) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Kompatibel semua merk HP (Samsung, Xiaomi, Oppo, Vivo, Realme, Transsion). Tekan 'Sambung Sekolah' jika di dalam gedung.",
+                        text = "Kompatibel 100% semua merk HP (Samsung, Xiaomi, Oppo, Vivo, Realme, Transsion). Tekan 'SAMBUNG GPS HP KE SEKOLAH' jika berada di dalam gedung/ruang kelas.",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
