@@ -217,6 +217,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 return
             }
 
+            if (_selfieBase64.value.isNullOrBlank()) {
+                onError("Wajib mengambil foto selfie guru/karyawan sebelum mengirim presensi $currentType!")
+                return
+            }
+
             val scheduleResult = com.example.util.AttendanceScheduleUtils.checkSchedule(currentType)
             if (!scheduleResult.isValidWindow && !overrideScheduleCheck) {
                 onError("Gagal: ${scheduleResult.message}")

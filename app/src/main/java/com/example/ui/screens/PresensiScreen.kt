@@ -792,7 +792,7 @@ fun PresensiScreen(viewModel: MainViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Camera / Selfie Card (Only for BERANGKAT and PULANG)
+        // Camera / Selfie Card (Mandatory for BERANGKAT and PULANG)
         if (presensiType == "BERANGKAT" || presensiType == "PULANG") {
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -800,28 +800,58 @@ fun PresensiScreen(viewModel: MainViewModel) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "📷 Kamera Selfie Guru & Karyawan",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (selfieBase64 != null) Color(0xFFDCFCE7) else Color(0xFFFEE2E2))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = if (selfieBase64 != null) "✓ SUDAH FOTO" else "★ WAJIB FOTO",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (selfieBase64 != null) Color(0xFF15803D) else Color(0xFFDC2626)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     Text(
-                        text = "Foto Selfie Kehadiran",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        text = "Setiap presensi Berangkat & Pulang wajib melampirkan foto selfie langsung guru/karyawan.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     if (selfieBase64 == null) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(140.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0xFFFEF2F2))
                                 .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.outlineVariant,
-                                    RoundedCornerShape(12.dp)
+                                    2.dp,
+                                    Color(0xFFEF4444),
+                                    RoundedCornerShape(14.dp)
                                 )
                                 .clickable {
                                     val mockBitmap = createSelfieWatermarkBitmap(selectedTeacher.name)
                                     viewModel.setSelfiePhoto(mockBitmap)
+                                    viewModel.showBanner("📸 Foto selfie guru/karyawan berhasil diambil dengan watermark GPS & Waktu!")
                                 },
                             contentAlignment = Alignment.Center
                         ) {
@@ -829,18 +859,19 @@ fun PresensiScreen(viewModel: MainViewModel) {
                                 Icon(
                                     imageVector = Icons.Default.CameraAlt,
                                     contentDescription = "Take Photo",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(36.dp)
+                                    tint = Color(0xFFDC2626),
+                                    modifier = Modifier.size(40.dp)
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Ketuk untuk Ambil Foto Selfie",
+                                    text = "Ketuk Di Sini Untuk Ambil Foto Selfie",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFDC2626)
                                 )
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "Lengkap watermark lokasi GPS & waktu",
+                                    text = "Otomatis dilengkapi Watermark Nama, GPS & Jam",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -852,30 +883,32 @@ fun PresensiScreen(viewModel: MainViewModel) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .background(Color(0xFFF0FDF4))
+                                .border(1.5.dp, Color(0xFF16A34A), RoundedCornerShape(12.dp))
                                 .padding(12.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Captured",
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = Color(0xFF16A34A),
                                 modifier = Modifier.size(32.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Foto Selfie Berhasil Diambil",
+                                    text = "Foto Selfie Guru/Karyawan Siap",
                                     fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFF15803D)
                                 )
                                 Text(
-                                    text = "Watermark E2EE & GPS Tersimpan",
+                                    text = "Watermark Nama & Koordinat GPS Terverifikasi",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            IconButton(onClick = { viewModel.clearSelfiePhoto() }) {
-                                Icon(imageVector = Icons.Default.Edit, contentDescription = "Ulangi")
+                            TextButton(onClick = { viewModel.clearSelfiePhoto() }) {
+                                Text("Foto Ulang", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -1127,11 +1160,9 @@ fun PresensiScreen(viewModel: MainViewModel) {
         // Submit Button
         Button(
             onClick = {
-                if (presensiType == "BERANGKAT" || presensiType == "PULANG") {
-                    if (selfieBase64 == null) {
-                        val mockBitmap = createSelfieWatermarkBitmap(selectedTeacher.name)
-                        viewModel.setSelfiePhoto(mockBitmap)
-                    }
+                if ((presensiType == "BERANGKAT" || presensiType == "PULANG") && selfieBase64 == null) {
+                    viewModel.showBanner("⚠️ Wajib Ambil Foto Selfie! Silakan ketuk kotak kamera merah di atas untuk mengambil foto selfie guru/karyawan.")
+                    return@Button
                 }
                 if (isBiometricEnabled) {
                     showBiometricPrompt = true
